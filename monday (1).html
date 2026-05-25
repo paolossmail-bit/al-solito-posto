@@ -192,7 +192,7 @@
   <div class="card">
     <div class="card-label">API Key Anthropic</div>
     <input type="text" id="apiKey" placeholder="sk-ant-..." oninput="checkKey()" />
-    <div class="hint" id="apiHint">Crea la key su console.anthropic.com → API Keys</div>
+    <div class="hint" id="apiHint">Crea la key su platform.openai.com → API Keys</div>
   </div>
 
   <div class="card">
@@ -262,9 +262,9 @@ loadVoices();
 function checkKey() {
   const k = document.getElementById('apiKey').value.trim();
   const h = document.getElementById('apiHint');
-  if (!k) { h.className = 'hint'; h.textContent = 'Crea la key su console.anthropic.com → API Keys'; return; }
-  if (k.startsWith('sk-ant-')) { h.className = 'hint ok'; h.textContent = '✓ key riconosciuta'; }
-  else { h.className = 'hint err'; h.textContent = '✗ deve iniziare con sk-ant-'; }
+  if (!k) { h.className = 'hint'; h.textContent = 'Crea la key su platform.openai.com → API Keys'; return; }
+  if (k.startsWith('sk-')) { h.className = 'hint ok'; h.textContent = '✓ key riconosciuta'; }
+  else { h.className = 'hint err'; h.textContent = '✗ deve iniziare con sk-'; }
 }
 
 function updateCooldown(v) {
@@ -327,23 +327,21 @@ REGOLE:
 Rispondi con NO oppure direttamente con il tuo intervento come Monday.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': document.getElementById('apiKey').value.trim(),
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
+        'Authorization': 'Bearer ' + document.getElementById('apiKey').value.trim()
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'gpt-4o-mini',
         max_tokens: 150,
         messages: [{ role: 'user', content: prompt }]
       })
     });
 
     const data = await res.json();
-    const reply = (data.content?.[0]?.text || '').trim();
+    const reply = (data.choices?.[0]?.message?.content || '').trim();
 
     setDot('dotThink', '');
 
@@ -368,7 +366,7 @@ Rispondi con NO oppure direttamente con il tuo intervento come Monday.`;
 
 function startSystem() {
   const key = document.getElementById('apiKey').value.trim();
-  if (!key || !key.startsWith('sk-ant-')) {
+  if (!key || !key.startsWith('sk-')) {
     alert('Inserisci una API key Anthropic valida (sk-ant-...)');
     return;
   }
