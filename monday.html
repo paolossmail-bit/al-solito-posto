@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monday — AI per lo show</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0e0f;
+    --bg2: #161618;
+    --bg3: #1e1e21;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #f0efe8;
+    --text2: #8a8a8a;
+    --text3: #555;
+    --accent: #7F77DD;
+    --accent2: #5DCAA5;
+    --amber: #EF9F27;
+    --red: #E24B4A;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .wrap { max-width: 620px; margin: 0 auto; }
+
+  header { margin-bottom: 2rem; }
+  .logo { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; }
+  .logo span { color: var(--accent); }
+  .subtitle { font-size: 13px; color: var(--text3); margin-top: 4px; font-family: 'DM Mono', monospace; }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .card-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.85rem;
+  }
+
+  input[type=text], textarea, select {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 0.85rem;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type=text]:focus, textarea:focus, select:focus { border-color: var(--border2); }
+  textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+  select { cursor: pointer; }
+
+  .hint { font-size: 11px; color: var(--text3); margin-top: 6px; font-family: 'DM Mono', monospace; }
+  .hint.ok { color: var(--accent2); }
+  .hint.err { color: var(--red); }
+
+  .param-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 0.85rem;
+  }
+  .param-row:last-child { margin-bottom: 0; }
+  .param-label { font-size: 13px; color: var(--text2); min-width: 180px; }
+  input[type=range] {
+    flex: 1;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .param-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    min-width: 48px;
+    text-align: right;
+  }
+
+  .status-grid { display: flex; flex-direction: column; gap: 10px; }
+  .status-row { display: flex; align-items: center; gap: 10px; }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .dot.active { background: var(--accent2); border-color: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+  .dot.thinking { background: var(--amber); border-color: var(--amber); animation: blink 0.9s infinite; }
+  .dot.speaking { background: var(--accent); border-color: var(--accent); animation: blink 0.5s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  .status-text { font-size: 13px; color: var(--text2); font-family: 'DM Mono', monospace; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+  .transcript-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 12px;
+    color: var(--text2);
+    min-height: 56px;
+    max-height: 110px;
+    overflow-y: auto;
+    line-height: 1.7;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .monday-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.85rem;
+    font-size: 14px;
+    color: var(--text);
+    min-height: 52px;
+    line-height: 1.65;
+  }
+  .monday-empty { color: var(--text3); font-style: italic; font-size: 13px; }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 0.75rem; }
+
+  .btn-start {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.65rem 1.5rem;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-start:hover { opacity: 0.85; }
+  .btn-start:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-stop {
+    background: transparent;
+    color: var(--red);
+    border: 1px solid var(--red);
+    border-radius: 8px;
+    padding: 0.65rem 1.5rem;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    display: none;
+    transition: opacity 0.15s;
+  }
+  .btn-stop:hover { opacity: 0.75; }
+
+  .session-info {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 8px;
+  }
+
+  .monday-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">MON<span>DAY</span></div>
+    <div class="subtitle">sistema AI proattivo per lo show</div>
+  </header>
+
+  <div class="card">
+    <div class="card-label">API Key Anthropic</div>
+    <input type="text" id="apiKey" placeholder="sk-ant-..." oninput="checkKey()" />
+    <div class="hint" id="apiHint">Crea la key su console.anthropic.com → API Keys</div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Contesto della puntata</div>
+    <textarea id="context" placeholder="Argomento e scaletta di oggi. Es: Parliamo della virilità in calo. Prima parte: statistiche e dati recenti. Seconda parte: cause culturali e sociali. Terza parte: cosa sta cambiando nei giovani di oggi."></textarea>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Parametri</div>
+    <div class="param-row">
+      <span class="param-label">Analizza ogni</span>
+      <input type="range" id="interval" min="10" max="60" value="20" step="5" oninput="document.getElementById('iVal').textContent=this.value+'s'" />
+      <span class="param-val" id="iVal">20s</span>
+    </div>
+    <div class="param-row">
+      <span class="param-label">Pausa tra interventi</span>
+      <input type="range" id="cooldown" min="60" max="300" value="120" step="30" oninput="updateCooldown(this.value)" />
+      <span class="param-val" id="cVal">2 min</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Stato</div>
+    <div class="status-grid">
+      <div class="status-row"><div class="dot" id="dotListen"></div><span class="status-text" id="sListen">in attesa</span></div>
+      <div class="status-row"><div class="dot" id="dotThink"></div><span class="status-text" id="sThink">nessuna analisi ancora</span></div>
+      <div class="status-row"><div class="dot" id="dotSpeak"></div><span class="status-text" id="sSpeak">monday non ha ancora parlato</span></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="card-label">Trascrizione</div>
+    <div class="transcript-box" id="txBox">—</div>
+    <div class="hint" id="txCount" style="margin-top:6px">0 parole</div>
+
+    <div class="divider"></div>
+
+    <div class="monday-label">Ultimo intervento di Monday</div>
+    <div class="monday-box" id="mondayBox"><span class="monday-empty">Monday non ha ancora parlato...</span></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-start" id="startBtn" onclick="startSystem()">Avvia Monday</button>
+    <button class="btn-stop" id="stopBtn" onclick="stopSystem()">Ferma</button>
+  </div>
+  <div class="session-info" id="sessionInfo"></div>
+
+</div>
+
+<script>
+let recognition = null;
+let running = false;
+let transcript = '';
+let finalBuffer = '';
+let lastIntervention = 0;
+let intervalTimer = null;
+let interventionCount = 0;
+const synth = window.speechSynthesis;
+let voices = [];
+
+function loadVoices() {
+  voices = synth.getVoices();
+}
+synth.onvoiceschanged = loadVoices;
+loadVoices();
+
+function checkKey() {
+  const k = document.getElementById('apiKey').value.trim();
+  const h = document.getElementById('apiHint');
+  if (!k) { h.className = 'hint'; h.textContent = 'Crea la key su console.anthropic.com → API Keys'; return; }
+  if (k.startsWith('sk-ant-')) { h.className = 'hint ok'; h.textContent = '✓ key riconosciuta'; }
+  else { h.className = 'hint err'; h.textContent = '✗ deve iniziare con sk-ant-'; }
+}
+
+function updateCooldown(v) {
+  const n = parseInt(v);
+  document.getElementById('cVal').textContent = n >= 60 ? Math.round(n/60) + ' min' : n + 's';
+}
+
+function setDot(id, state) {
+  document.getElementById(id).className = 'dot' + (state ? ' ' + state : '');
+}
+
+function speak(text) {
+  synth.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'it-IT';
+  const itVoice = voices.find(v => v.lang.startsWith('it'));
+  if (itVoice) utt.voice = itVoice;
+  utt.rate = 0.93;
+  utt.pitch = 1.05;
+  setDot('dotSpeak', 'speaking');
+  document.getElementById('sSpeak').textContent = 'monday sta parlando...';
+  utt.onend = () => {
+    setDot('dotSpeak', '');
+    document.getElementById('sSpeak').textContent = 'ultimo: ' + text.substring(0, 55) + (text.length > 55 ? '…' : '');
+  };
+  synth.speak(utt);
+}
+
+async function analyzeAndDecide() {
+  const recent = transcript.split(' ').slice(-150).join(' ').trim();
+  if (recent.length < 20) return;
+
+  const now = Date.now();
+  const cooldownMs = parseInt(document.getElementById('cooldown').value) * 1000;
+  const sinceLastMin = Math.round((now - lastIntervention) / 60000);
+  const cooldownMet = (now - lastIntervention) > cooldownMs;
+
+  setDot('dotThink', 'thinking');
+  document.getElementById('sThink').textContent = 'monday valuta se intervenire...';
+
+  const context = document.getElementById('context').value.trim() || 'Nessun contesto specificato.';
+  const cooldownMin = Math.round(cooldownMs / 60000);
+
+  const prompt = `Sei Monday, l'oste di un bar futuristico gestito da un'AI. Stai ascoltando la conversazione tra tre amici: Paolo, Andrea e Giovanni, che registrano il loro show.
+
+CONTESTO PUNTATA:
+${context}
+
+CONVERSAZIONE RECENTE:
+"${recent}"
+
+REGOLE:
+- Intervieni SOLO se hai qualcosa di genuinamente interessante, divertente o pertinente
+- NON intervenire se non hai nulla di nuovo da aggiungere
+- Pausa minima tra interventi: ${cooldownMin} minuti. Sono passati ${sinceLastMin} minuti — ${cooldownMet ? 'puoi intervenire' : 'è troppo presto, aspetta'}
+- Quando intervieni: parla come una persona al tavolo. Inizia con frasi naturali tipo "no aspetta", "comunque", "sapete che?", "però", "ma scusa"
+- Massimo 2-3 frasi. Niente elenchi. Niente "certamente". Sei un oste con carattere, non un assistente.
+- Se non è il momento: rispondi SOLO con la parola NO
+
+Rispondi con NO oppure direttamente con il tuo intervento come Monday.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': document.getElementById('apiKey').value.trim(),
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 150,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const reply = (data.content?.[0]?.text || '').trim();
+
+    setDot('dotThink', '');
+
+    if (!reply || reply.toUpperCase().startsWith('NO')) {
+      document.getElementById('sThink').textContent = 'analisi: non è il momento';
+      return;
+    }
+
+    interventionCount++;
+    lastIntervention = Date.now();
+    document.getElementById('mondayBox').textContent = reply;
+    document.getElementById('sThink').textContent = 'intervento #' + interventionCount + ' inviato';
+    document.getElementById('sessionInfo').textContent = 'interventi totali: ' + interventionCount;
+    speak(reply);
+
+  } catch(e) {
+    setDot('dotThink', '');
+    document.getElementById('sThink').textContent = 'errore: ' + e.message;
+  }
+}
+
+function startSystem() {
+  const key = document.getElementById('apiKey').value.trim();
+  if (!key || !key.startsWith('sk-ant-')) {
+    alert('Inserisci una API key Anthropic valida (sk-ant-...)');
+    return;
+  }
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Usa Chrome su laptop — Safari e Firefox non supportano il riconoscimento vocale continuo.');
+    return;
+  }
+
+  running = true;
+  transcript = '';
+  finalBuffer = '';
+  lastIntervention = 0;
+  interventionCount = 0;
+
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'inline-block';
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'it-IT';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    setDot('dotListen', 'active');
+    document.getElementById('sListen').textContent = 'in ascolto...';
+  };
+
+  recognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalBuffer += e.results[i][0].transcript + ' ';
+      else interim = e.results[i][0].transcript;
+    }
+    transcript = finalBuffer + interim;
+    const words = transcript.trim().split(/\s+/).filter(Boolean).length;
+    document.getElementById('txBox').textContent = transcript.slice(-400) || '—';
+    document.getElementById('txCount').textContent = words + ' parole trascritte';
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error === 'no-speech') return;
+    document.getElementById('sListen').textContent = 'errore microfono: ' + e.error;
+  };
+
+  recognition.onend = () => {
+    if (running) {
+      try { recognition.start(); } catch(e) {}
+    } else {
+      setDot('dotListen', '');
+      document.getElementById('sListen').textContent = 'fermato';
+    }
+  };
+
+  recognition.start();
+
+  const intervalMs = parseInt(document.getElementById('interval').value) * 1000;
+  intervalTimer = setInterval(() => { if (running) analyzeAndDecide(); }, intervalMs);
+}
+
+function stopSystem() {
+  running = false;
+  if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
+  if (intervalTimer) { clearInterval(intervalTimer); intervalTimer = null; }
+  synth.cancel();
+  setDot('dotListen', '');
+  setDot('dotThink', '');
+  setDot('dotSpeak', '');
+  document.getElementById('sListen').textContent = 'fermato';
+  document.getElementById('startBtn').style.display = 'inline-block';
+  document.getElementById('stopBtn').style.display = 'none';
+}
+</script>
+</body>
+</html>
